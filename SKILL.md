@@ -1,6 +1,6 @@
 ---
 name: dynamic-panels-agui
-description: "Build a new agent-first web app with a dynamic collapsible-panels workspace, shadcn/ui and OpenUI generative UI (AG-UI). Installs a self-contained kit into a Next.js app: design tokens and style guide (replaces a separate design system), all 62 shadcn/ui components, the OpenUI genui component library with actions, the fluid panel engine (layouts, rails, back stack, mobile), agent thread with streaming step cards and human-in-the-loop, slash-command chat inputs, and a live /api/chat route. Use when the user wants to start or restyle an app 'like the panels workspace', an agentic workspace, an AG-UI or OpenUI app, generative UI cards in panels, collapsible or fluid panels, a list → detail → context → tool layout, or says 'use the dynamic panels skill'. Not for marketing sites or single-page forms."
+description: "Build a new agent-first web app with a dynamic collapsible-panels workspace, shadcn/ui and OpenUI generative UI (AG-UI). Installs a self-contained kit into a Next.js app: design tokens and style guide (replaces a separate design system), all 62 shadcn/ui components, the OpenUI genui component library with actions, the fluid panel engine (layouts, rails, back stack, mobile), agent thread with streaming step cards and human-in-the-loop, slash-command chat inputs, and a live /api/chat route. Use when the user wants to start or restyle an app 'like the panels workspace', an agentic workspace, an AG-UI or OpenUI app, generative UI cards in panels, collapsible or fluid panels, a list → detail → context → tool layout, or says 'use the dynamic panels skill'. On an existing project it changes the interface layer only: data, APIs, server code, auth and config stay untouched. Not for marketing sites or single-page forms."
 ---
 
 # Dynamic panels AG-UI
@@ -32,16 +32,110 @@ sonner, lucide, radix-ui, OpenUI (`@openuidev/react-lang` 0.3.0).
 ### 1. Install
 
 ```bash
-<skill-dir>/scripts/setup.sh <app-dir>          # new dir → creates the Next.js app first
-<skill-dir>/scripts/setup.sh <app-dir> --force  # existing app, overwrite instead of *.bak
+<skill-dir>/scripts/setup.sh <app-dir>
 ```
 
-The script installs pinned dependencies, copies `template/`, adds the
-`generate` / `predev` / `prebuild` scripts, generates the OpenUI spec and type-checks.
-If it is an existing app with its own `globals.css` / `layout.tsx`, merge the
-`.bak` copies back by hand: keep this kit's tokens and layer order.
+The script picks the mode itself:
 
-Run `npm run dev` and confirm the placeholder workspace works before changing anything.
+- **New app** (no `package.json`): creates the Next.js app, installs pinned
+  dependencies, copies all of `template/`, adds the `generate` / `predev` /
+  `prebuild` scripts, generates the OpenUI spec and type-checks. Run
+  `npm run dev` and confirm the placeholder workspace works before changing anything.
+- **Existing app** (`package.json` present): plan first, ask, then apply the
+  **interface layer only**. Follow "Existing project" below.
+
+## Existing project: interface layer only
+
+When the app already exists, this skill restyles and restructures its UI. It
+does not change what the app does. Treat the boundary as binding:
+
+| Change (interface layer) | Never change |
+|---|---|
+| Components, pages' JSX, layouts' providers and wrappers | API routes, route handlers, server actions, middleware |
+| Styles: `globals.css` tokens, Tailwind classes, fonts | Data fetching and mutation logic, API clients, query keys, caches |
+| UI-only client state (layout key, selection, open panels, drafts) | Database, ORM, schemas, migrations, validation rules |
+| `src/components/ui`, `src/lib/genui`, `src/components/workspace`, `src/lib/workspace` | Auth, permissions, env files, secrets |
+| Copy (labels, placeholders, empty states, toasts) | Business rules, domain types, state machines, calculations |
+| Adding missing UI packages | `next.config`, `tsconfig`, `postcss`, ESLint, npm scripts, CI, package upgrades or removals |
+
+### Plan, ask, apply
+
+The interface changes are always applied in full: tokens, providers, the
+mounted shell and the extended components. What needs the user's consent is
+anything that **installs** something or **replaces** something the app
+already has.
+
+1. **Plan** (changes nothing):
+   `<skill-dir>/scripts/setup.sh <app-dir> --plan`. It lists the files it will
+   add, the existing files that differ from the kit, the missing UI packages
+   and any blockers (not Next.js, Tailwind below v4, no `@/*` alias).
+2. **Ask once, together** (AskUserQuestion, one question per decision, a
+   recommended option first):
+   - **Missing packages**: show the list and ask to install it. Without
+     them the kit can't compile, so if the user declines, stop and say so.
+   - **Blockers**: they need config changes. Ask whether to make that change
+     or stop. Never make it silently.
+   - **Where the shell goes**: which page or route it replaces, or a new
+     route next to the existing ones.
+   - **Overrides that change what users already see**: a token the app
+     already defines with a different value (keep the app's brand, or take
+     the kit's?), a provider that already exists (reuse it, or add the
+     kit's?), and an existing page whose JSX is replaced.
+   Additive changes need no question: new files, new tokens, new variants,
+   new CSS classes.
+3. **Apply**: `setup.sh <app-dir> --install-deps` if packages were approved,
+   or plain `setup.sh <app-dir>` if nothing is missing. The script refuses to
+   add files while packages are missing, so the app never ends up with
+   imports that don't resolve. It adds new files only and never overwrites one.
+
+What the script never does on an existing app: copy `app/` (pages, layout,
+`globals.css`), add `/api/chat`, the server tool loop or `env.ts`, edit any
+config or npm script, or install `openai`.
+
+Then apply the rest of the interface yourself, following the user's answers:
+
+1. **Collisions**: for each listed file (often `components/ui/*` or
+   `lib/utils.ts`), compare it with `<skill-dir>/template/src/<same path>`
+   and add only what the kit needs (a missing variant such as `size: "xs"` or
+   `"icon-sm"`, a missing export). Never remove or change the app's existing
+   variants, because other screens use them. If the kit needs an existing
+   variant to *look* different, that's an override: ask.
+2. **Styles**: merge `<skill-dir>/template/src/app/globals.css` into the app's
+   global CSS. Add the layer order, the OpenUI import, the kit-only tokens
+   (`--canvas`, `--selected`, `--status-*`, `--ws-*`), their `@theme`
+   mappings and the `ws-*` / `.ws-genui` rules. Where the app already defines a
+   token (`--primary`, `--radius`, fonts), use the user's answer from the plan
+   step (the default is to keep the app's value, because that is its brand). Bind the kit's `dark` variant to the app's existing theme mechanism
+   (class or attribute) instead of changing that mechanism.
+3. **Providers**: wrap the workspace route (not the whole app, unless the app
+   wants it) in `TooltipProvider` and `Toaster`; use the app's existing theme
+   provider if it has one.
+4. **Mount**: render `WorkspaceShell` where the user chose, replacing only
+   that page's JSX. Its data loading (server component fetches, loaders,
+   hooks) stays where it is and is passed into the shell as props or through
+   an adapter.
+5. **Data adapter, not demo data**: replace `lib/workspace/demo-data.ts` with
+   an adapter that **reads through the app's existing functions** (its hooks,
+   API client, server-component props) and maps their results to the kit's
+   `Item` shape. Mapping and formatting only; no new queries, endpoints or
+   fields. Map the app's existing statuses onto the six tones; never add a
+   status to the domain.
+6. **Actions**: each custom action and each button calls a function the app
+   already has (its mutation, server action or client method). If a panel
+   needs a capability the backend doesn't offer, render it disabled with a
+   tooltip and tell the user. Don't build it.
+7. **Agent**: if the app already has an agent or chat endpoint, point
+   `lib/workspace/agent-client.ts` at it and render its output. If it has none,
+   leave `AGENT_LIVE` off and tell the user that the live agent needs a server
+   route (`<skill-dir>/template/src/app/api/chat`), which is a backend change
+   they must approve.
+8. **Done check**: `git diff --stat` shows only files in the left column
+   above plus `package.json` / lockfile dependency additions. Anything else gets
+   reverted or raised with the user.
+
+Whenever the interface change seems to need something from the right column,
+or would replace something the app has for no reason the user gave, stop and
+ask. Don't work around the boundary, and don't override silently.
 
 ### 2. Read the references before designing
 
@@ -66,7 +160,11 @@ Before writing code, write this mapping down and confirm it with the user if it'
 
 ### 4. Replace content, keep the system
 
-1. Replace `demo-data.ts` with real data or API calls. **No placeholder strings
+On an existing project, the "Existing project" rules above override anything
+in this step that would touch data, APIs or config.
+
+1. Replace `demo-data.ts` with real data or API calls (existing project: an
+   adapter over the app's existing functions). **No placeholder strings
    ship.** Nothing in this kit's text belongs to a previous app.
 2. Rename types and slots (`types.ts`, `layout.ts`), keeping the six layout shapes.
 3. Rewrite `widgets.ts` cards for your steps, using `lang.ts` builders and only
@@ -76,13 +174,15 @@ Before writing code, write this mapping down and confirm it with the user if it'
 5. Handle every custom action in exactly one `onAction` switch per panel.
 6. Brand only through tokens: change `--primary`, `--ring`, `--canvas`,
    fonts and radius in `globals.css`, in both themes. Keep the status tones.
-7. Going live: the user puts `THESYS_API_KEY` in `.env.local` themselves; set
+7. Going live (new apps; existing apps follow "Existing project" step 7): the user puts `THESYS_API_KEY` in `.env.local` themselves; set
    `NEXT_PUBLIC_AGENT_LIVE=1`; add custom-action rules to
    `shadcnAdditionalRules`; run `npm run generate`. Never write, echo or commit a key.
 
 ### 5. Verify (required before calling it done)
 
-- `npx tsc --noEmit` passes; `npm run build` passes.
+- `npx tsc --noEmit` passes; `npm run build` passes. On an existing project,
+  no new errors compared with before the install, and the boundary check
+  (`git diff --stat`) is clean.
 - Drive it in a browser (Playwright or Chrome): every layout is reachable; Esc
   walks `PARENT` back to overview; rails expand; ↑↓ / Enter work in the
   list from first load; `/` opens the slash menu; a card link opens a context
@@ -92,6 +192,9 @@ Before writing code, write this mapping down and confirm it with the user if it'
 
 ## Hard rules
 
+- Existing project: apply the interface layer only. Never touch data, APIs,
+  server code, auth, env or config. Get consent before installing packages
+  and before overriding anything the app already has.
 - Colour means status. Neutral UI everywhere else; never raw palette classes in app code.
 - Panels never overlay content; deeper surfaces re-proportion the row. Modals
   only for confirmations and genui `DialogBlock` / `DrawerBlock`.

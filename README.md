@@ -10,6 +10,13 @@ git clone git@github.com:tombrewsviews/dynamic-panels-agui.git ~/.claude/skills/
 ~/.claude/skills/dynamic-panels-agui/scripts/setup.sh my-app && cd my-app && npm run dev
 ```
 
+On an **existing** app the skill changes the interface layer only. It runs
+`setup.sh <app> --plan`, asks you before installing missing UI packages or
+overriding anything your app already has, and then applies the interface:
+new UI files (nothing overwritten), merged tokens, providers and the panels
+shell over your existing data and actions. Data, API routes, server code,
+auth, env and config are never touched.
+
 ## What you get
 
 - **Panels**: one row of always-mounted panels driven by a single layout key:
@@ -34,7 +41,8 @@ git clone git@github.com:tombrewsviews/dynamic-panels-agui.git ~/.claude/skills/
 SKILL.md                 workflow and hard rules (entry point for the agent)
 references/              style guide, panels, AG-UI/OpenUI, components, interactions
 template/                files copied into the app (src/…, configs, .env.example)
-scripts/setup.sh         create or patch a Next.js app, install deps, copy, generate, type-check
+scripts/setup.sh         new app: create, install, copy, generate, type-check
+                         existing app: --plan, then (with consent) --install-deps; adds UI files only
 ```
 
 Verified with Next.js 16.2.6, React 19.2, Tailwind 4, `@openuidev/react-lang` 0.3.0.
