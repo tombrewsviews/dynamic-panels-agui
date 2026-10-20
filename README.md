@@ -14,8 +14,10 @@ On an **existing** app the skill changes the interface layer only. It runs
 `setup.sh <app> --plan`, asks you before installing missing UI packages or
 overriding anything your app already has, and then applies the interface:
 new UI files (nothing overwritten), merged tokens, providers and the panels
-shell over your existing data and actions. Data, API routes, server code,
-auth, env and config are never touched.
+shell over your existing data and actions. By default it refactors your
+current interface in place; a separate preview route (e.g. `/workspace`) is
+added only if you ask for one. Data, API routes, server code, auth, env and
+config are never touched.
 
 ## What you get
 

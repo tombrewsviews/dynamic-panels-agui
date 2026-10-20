@@ -75,12 +75,16 @@ already has.
      them the kit can't compile, so if the user declines, stop and say so.
    - **Blockers**: they need config changes. Ask whether to make that change
      or stop. Never make it silently.
-   - **Where the shell goes**: which page or route it replaces, or a new
-     route next to the existing ones.
+   - **Current interface or preview route**: by default the refactor
+     applies to the app's current interface in place: its existing pages
+     become the panels shell. A separate preview route (e.g. `/workspace`)
+     next to the old UI is an option only, never the default: add one only
+     when the user asks for it, or offer it here as the second option
+     (current interface first, recommended).
    - **Overrides that change what users already see**: a token the app
      already defines with a different value (keep the app's brand, or take
-     the kit's?), a provider that already exists (reuse it, or add the
-     kit's?), and an existing page whose JSX is replaced.
+     the kit's?) and a provider that already exists (reuse it, or add the
+     kit's?).
    Additive changes need no question: new files, new tokens, new variants,
    new CSS classes.
 3. **Apply**: `setup.sh <app-dir> --install-deps` if packages were approved,
@@ -107,13 +111,16 @@ Then apply the rest of the interface yourself, following the user's answers:
    token (`--primary`, `--radius`, fonts), use the user's answer from the plan
    step (the default is to keep the app's value, because that is its brand). Bind the kit's `dark` variant to the app's existing theme mechanism
    (class or attribute) instead of changing that mechanism.
-3. **Providers**: wrap the workspace route (not the whole app, unless the app
-   wants it) in `TooltipProvider` and `Toaster`; use the app's existing theme
-   provider if it has one.
-4. **Mount**: render `WorkspaceShell` where the user chose, replacing only
-   that page's JSX. Its data loading (server component fetches, loaders,
-   hooks) stays where it is and is passed into the shell as props or through
-   an adapter.
+3. **Providers**: wrap the pages that render the shell in `TooltipProvider`
+   and `Toaster` (the existing layout that holds them, or the preview route's
+   layout if the user chose one); use the app's existing theme provider if it
+   has one.
+4. **Mount**: by default render `WorkspaceShell` in the app's existing pages,
+   replacing only their JSX; don't add a new route. Only if the user chose a
+   preview route, add it as a new page and leave the existing pages as they
+   are. Either way, data loading (server component fetches, loaders, hooks)
+   stays where it is and is passed into the shell as props or through an
+   adapter.
 5. **Data adapter, not demo data**: replace `lib/workspace/demo-data.ts` with
    an adapter that **reads through the app's existing functions** (its hooks,
    API client, server-component props) and maps their results to the kit's
@@ -195,6 +202,9 @@ in this step that would touch data, APIs or config.
 - Existing project: apply the interface layer only. Never touch data, APIs,
   server code, auth, env or config. Get consent before installing packages
   and before overriding anything the app already has.
+- Existing project: refactor the current interface in place. Add a preview
+  route (e.g. `/workspace`) only when the user asks for one or accepts it
+  when offered.
 - Colour means status. Neutral UI everywhere else; never raw palette classes in app code.
 - Panels never overlay content; deeper surfaces re-proportion the row. Modals
   only for confirmations and genui `DialogBlock` / `DrawerBlock`.
