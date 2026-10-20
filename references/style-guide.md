@@ -41,7 +41,7 @@ on `<html>` (next-themes, `attribute="data-theme"`, default `system`). The
 | `--secondary` / `--muted` / `--accent` | `oklch(0.97 0 0)` | `0.269 / 0.269 / 0.371` | Secondary buttons, hover fills, section rows, skeletons |
 | `--border` / `--input` | `oklch(0.922 0 0)` | `oklch(1 0 0 / 10%)` / `15%` | All 1px borders |
 | `--ring` | `oklch(0.556 0 0)` | `oklch(0.708 0 0)` | Focus rings **and** the selected-state outline (≥ 3:1) |
-| `--selected` | foreground 3% over background | 6% | Fill of the selected row |
+| `--selected` | foreground 8% over background | 20% | Fill of the selected/active item (see "Selected / active state" below) |
 | `--status-ok` | `oklch(0.45 0.11 155)` | `oklch(0.78 0.14 155)` | Completed, ready, covered |
 | `--status-warn` | `oklch(0.47 0.12 55)` | `oklch(0.82 0.14 75)` | Needs the human, paused, low confidence, urgent |
 | `--status-info` | `oklch(0.46 0.15 255)` | `oklch(0.78 0.12 255)` | Running, informational, "learning applied" |
@@ -143,12 +143,38 @@ command, toast) use their shadcn defaults. Do not add shadows elsewhere.
 | Hover (buttons, chips) | `hover:bg-accent` |
 | Focus | `focus-visible:ring-2 ring-ring` (rows add `ring-offset-1 ring-offset-background`); never remove focus without a replacement |
 | Selected list row | `bg-selected ring-2 ring-ring` + `aria-current` + title `font-semibold` |
+| Selected nav / tab item (no ring) | `bg-selected text-foreground` + `aria-current`; resting `text-muted-foreground hover:bg-accent hover:text-foreground` |
 | Selected table row (item open in a side panel) | `bg-muted font-medium shadow-[inset_3px_0_0_var(--ring)]` + `aria-current` |
 | Pressed toggle | `aria-pressed`, `bg-selected` or `data-[state=on]:border-foreground/30` |
 | Disabled | `opacity-50` (buttons) / `opacity-60` (chips); keep a tooltip explaining why |
 | Loading agent step | three `Skeleton` bars (`h-4 w-1/3`, `h-3 w-5/6`, `h-3 w-2/3`) in `rounded-xl border p-4` |
 | Empty | shadcn `Empty` with a title and one-line next step ("Clear a filter or change the search.") |
 | Jump target | `.ws-flash` (3px ring pulse, 1.4s) on the element scrolled to |
+
+### Selected / active state — make the fill carry its own weight
+
+`--selected` is the active fill for nav items, open list rows and pressed
+toggles. A nav item (the left-rail "Pain points", a top-bar tab) has **no ring**
+— `bg-selected` is the *only* thing marking it active, so the fill must be
+clearly visible on `bg-card` and clearly stronger than the hover tint
+(`bg-accent`) in both themes.
+
+Two traps the first version fell into, and the rule that fixes them:
+
+- **It was far too faint** (foreground 3% light / 6% dark). On a list row the
+  `ring-2 ring-ring` did the work and hid the problem; on a ring-less nav item
+  the active state was nearly invisible.
+- **Dark is painted on the wrong surface.** `--selected` is mixed against
+  `--background` (0.145) but the nav sits on the lighter `--card` (0.205). A
+  small mix therefore lands *darker than the card* and vanishes — and worse,
+  hover (`bg-accent`, 0.269) ends up more prominent than the active item. The
+  dark percentage must be large enough to clear both the card and hover.
+
+So the two themes carry **different** percentages by design (that's why `:root`
+and the dark block set `--selected` separately): light **8%** (a gentle grey on
+the white card, darker than the 0.97 hover), dark **20%** (~0.31 lightness,
+comfortably above card 0.205 and hover 0.269). When you retune any neutral,
+re-check that an active nav item still beats its own hover in **both** themes.
 
 ## Motion
 

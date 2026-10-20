@@ -53,7 +53,12 @@
 :root {
   --radius: 0.625rem;
   /* Text tokens hold ≥4.5:1 on background, muted, the selected row and their own 15% tints (WCAG AA). */
-  --selected: color-mix(in oklab, var(--foreground) 3%, var(--background));
+  /* Selected/active fill (nav item, open list row, pressed toggle). It sits on
+     bg-card and must read clearly on its own — a nav item has no ring to lean on
+     — and stronger than the hover tint (bg-accent) in BOTH themes. Mixed against
+     bg-background, so the dark value needs a bigger percentage to clear the
+     lighter card. See references/style-guide.md "Selected / active state". */
+  --selected: color-mix(in oklab, var(--foreground) 8%, var(--background));
   /* App canvas behind the panels. */
   --canvas: #f2f4f8;
   --status-ok: oklch(0.45 0.11 155);
@@ -94,7 +99,10 @@
 }
 
 [data-theme="dark"] {
-  --selected: color-mix(in oklab, var(--foreground) 6%, var(--background));
+  /* Larger mix than light: measured against bg-background (0.145) but painted on
+     the lighter bg-card (0.205), so a small percentage lands DARKER than the card
+     and the active state disappears. 20% clears both the card and hover (0.269). */
+  --selected: color-mix(in oklab, var(--foreground) 20%, var(--background));
   --canvas: oklch(0.17 0.008 260);
   --status-ok: oklch(0.78 0.14 155);
   --status-warn: oklch(0.82 0.14 75);
