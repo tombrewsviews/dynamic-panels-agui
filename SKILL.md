@@ -19,8 +19,8 @@ buttons drive those panels. This skill is the design system: follow
 | `src/app/layout.tsx` | Geist fonts, ThemeProvider (`data-theme`), TooltipProvider, Toaster |
 | `src/components/ui/*` | 62 shadcn/ui components (new-york, neutral, lucide) |
 | `src/lib/genui/*` | OpenUI library: 59 components, actions, rules, examples, selection context, `lang.ts` builders |
-| `src/components/workspace/*` | Panel engine and chrome: FluidSlot, Rail, PanelHeader, ChatInput, AgentMessage, status, TopBar, shell, placeholder panels |
-| `src/lib/workspace/*` | `layout.ts` (layouts / parents / mobile), `store.ts` (zustand navigation + threads), `widgets.ts` (Lang cards), `types.ts`, `agent-client.ts`, `demo-data.ts` (placeholder) |
+| `src/components/workspace/*` | Panel engine and chrome: FluidSlot, Rail, Divider, PanelHeader, ChatInput, AgentMessage, status, TopBar, shell, placeholder panels |
+| `src/lib/workspace/*` | `layout.ts` (layouts / parents / mobile / divider arithmetic), `store.ts` (zustand navigation + threads + dragged widths), `widgets.ts` (Lang cards), `types.ts`, `agent-client.ts`, `demo-data.ts` (placeholder) |
 | `src/app/api/chat/route.ts`, `src/lib/{tool-loop,cloud-prompt,app-tools,env}.ts` | Live agent: OpenUI gateway proxy with server tools |
 | `src/library.ts`, `src/generated/spec.json` | OpenUI CLI entry and generated spec (system prompt source) |
 
@@ -148,6 +148,7 @@ ask. Don't work around the boundary, and don't override silently.
 
 - `references/style-guide.md`: tokens, type, spacing, radius, states, motion, writing. **Binding.**
 - `references/panels.md`: the collapsible-panels model and how to adapt it.
+- `references/dividers.md`: the resizable gaps between panels (spec, limits, verification).
 - `references/agui-openui.md`: OpenUI Lang, actions, thread, HITL, going live.
 - `references/components.md`: every component and exact genui signatures.
 - `references/interactions.md`: input, list, thread, panel and feedback patterns plus a11y.
@@ -191,7 +192,8 @@ in this step that would touch data, APIs or config.
   no new errors compared with before the install, and the boundary check
   (`git diff --stat`) is clean.
 - Drive it in a browser (Playwright or Chrome): every layout is reachable; Esc
-  walks `PARENT` back to overview; rails expand; ↑↓ / Enter work in the
+  walks `PARENT` back to overview; rails expand; each divider shows its grip
+  on hover, stops at the panels' minimum widths and keeps its width after a reload; ↑↓ / Enter work in the
   list from first load; `/` opens the slash menu; a card link opens a context
   panel and marks the row selected; re-run appends a card and the chip jumps
   to it; HITL resolves; dark mode and a 420px viewport look right; the console
@@ -206,7 +208,8 @@ in this step that would touch data, APIs or config.
   route (e.g. `/workspace`) only when the user asks for one or accepts it
   when offered.
 - Colour means status. Neutral UI everywhere else; never raw palette classes in app code.
-- Panels never overlay content; deeper surfaces re-proportion the row. Modals
+- Panels never overlay content; deeper surfaces re-proportion the row.
+  Dividers resize two neighbouring full panels only; nothing animates during a drag. Modals
   only for confirmations and genui `DialogBlock` / `DrawerBlock`.
 - One filled (`default`) button per action group.
 - In-app effects use custom actions, never `continue_conversation`.

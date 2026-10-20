@@ -24,7 +24,8 @@ config are never touched.
 - **Panels**: one row of always-mounted panels driven by a single layout key:
   `overview → focus → context → context2`, `tool → toolSide`. Panels animate
   width on one curve; collapsed panels become clickable rails; Esc walks back;
-  below 768px one panel shows at a time.
+  a three-dot grip in each gap drags to resize two panels, remembered per
+  layout; below 768px one panel shows at a time.
 - **Agent UI**: agent steps stream as OpenUI cards (tables with row actions,
   sections and row buttons; alerts with linked items; forms; charts…). Card
   buttons drive the panels through custom actions. Includes human-in-the-loop
@@ -41,7 +42,7 @@ config are never touched.
 
 ```
 SKILL.md                 workflow and hard rules (entry point for the agent)
-references/              style guide, panels, AG-UI/OpenUI, components, interactions
+references/              style guide, panels, dividers, AG-UI/OpenUI, components, interactions
 template/                files copied into the app (src/…, configs, .env.example)
 scripts/setup.sh         new app: create, install, copy, generate, type-check
                          existing app: --plan, then (with consent) --install-deps; adds UI files only

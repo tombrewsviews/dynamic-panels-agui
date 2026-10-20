@@ -8,7 +8,8 @@ takes the room. Back / Escape walks the same path in reverse.
 
 Files: `src/lib/workspace/layout.ts` (the model), `src/components/workspace/fluid-slot.tsx`
 (a column), `rail.tsx` (collapsed column), `panel-header.tsx`, `workspace-shell.tsx`
-(composition plus global keyboard), `src/lib/workspace/store.ts` (navigation actions).
+(composition plus global keyboard), `divider.tsx` (resize handle between panels),
+`src/lib/workspace/store.ts` (navigation actions and dragged widths).
 
 ## 1. The model
 
@@ -18,6 +19,8 @@ interface SlotSpec { width: number /* % of row */; mode: SlotMode }
 LAYOUTS: Record<LayoutKey, Record<SlotKey, SlotSpec>>   // widths per layout sum to 100
 PARENT:  Record<LayoutKey, LayoutKey>                   // where Back/Esc goes
 MOBILE_PRIMARY: Record<LayoutKey, SlotKey>              // the only slot shown below 768px
+MIN_WIDTH: Record<SlotKey, number>                      // px: the FluidSlot minWidth and the divider's limit
+resolveSlots(layout, isMobile, prefs)                   // LAYOUTS with the user's dragged widths applied
 ```
 
 The six canonical shapes cover almost every app. Rename the slots to your
@@ -115,6 +118,7 @@ On load, focus starts on the selected list row so arrows work immediately.
 - Double-click a row → `overview`.
 - Panel header expand/minimise icon toggles `overview` ↔ `focus`.
 - Clicking a rail expands it.
+- Dragging the gap between two full panels resizes those two (section 9).
 
 ## 7. Mobile (< 768px)
 
@@ -132,13 +136,34 @@ an open entity (`aria-current`, a 3px inset bar in `--ring`). Native lists use
 `aria-current` + `bg-selected ring-2 ring-ring`. Users always see which row
 the side panel belongs to.
 
-## 9. Adapting checklist
+## 9. Dividers: resizing between panels
+
+Every gap between two neighbouring full panels has a divider: a three-dot
+grip that shows on hover, drags to trade width between those two panels
+only, and is remembered per layout. The layouts above stay the defaults.
+Full spec, limits and verification: `references/dividers.md`. The points
+that are easy to get wrong:
+
+- The divider sits **over** the gap (`absolute`, at the left panel's right
+  edge), never as a flex child, so widths still sum to 100.
+- Limits are the panels' `MIN_WIDTH` in px, the same number as `minWidth`.
+- Measure a drag from its start, not move by move, or the divider drifts
+  from the pointer after hitting a limit.
+- Turn transitions off during a drag (`[data-resizing]`), or the column lags
+  the pointer.
+- Load saved widths after hydration, and ignore ones that no longer fit the
+  layout.
+
+## 10. Adapting checklist
 
 1. Rename `SlotKey`s to your surfaces; keep six or fewer.
 2. Write `LAYOUTS`, `PARENT`, `MOBILE_PRIMARY` (widths sum to 100, rails = 6).
 3. In the shell, render one `FluidSlot` per slot in left-to-right reading
-   order, each with a `minWidth` and, if it can collapse, a `rail`.
+   order, each with `minWidth={MIN_WIDTH[k]}` and, if it can collapse, a
+   `rail`; keep the `ORDER` in `layout.ts` the same as the render order, so
+   dividers sit in the right gaps.
 4. Expose one store action per transition; components call actions, never
    `setLayout` with a hard-coded deeper layout from inside another panel.
 5. Verify: every layout reachable, Esc returns along `PARENT`, rails expand,
-   nothing reflows mid-animation, mobile shows one panel with ←.
+   nothing reflows mid-animation, mobile shows one panel with ←, every
+   divider drags within its limits and its width survives a reload.

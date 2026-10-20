@@ -91,6 +91,7 @@ Tailwind's 4px scale only. The values below are fixed.
 |---|---|
 | Shell padding / gap between bar and row | `p-2` / `gap-2` (8px) |
 | Gap between panels | each slot `px-1` (4px each side, so 8px between cards); the row is `-mx-1` |
+| Divider | `w-4` hit area centred on the gap (`absolute -translate-x-1/2`), takes no width; grip `h-8 w-3`, vertically centred |
 | Top bar | `h-12 rounded-2xl border bg-card px-3 shadow-xs`, items `gap-3` |
 | Panel header | `min-h-14 px-4 py-2.5 border-b gap-2` |
 | Sub-header strip (filters, step chips) | `px-4 py-2 border-b`, items `gap-1.5` (filters) / `gap-1` (chips) |
@@ -150,6 +151,7 @@ command, toast) use their shadcn defaults. Do not add shadows elsewhere.
 | Loading agent step | three `Skeleton` bars (`h-4 w-1/3`, `h-3 w-5/6`, `h-3 w-2/3`) in `rounded-xl border p-4` |
 | Empty | shadcn `Empty` with a title and one-line next step ("Clear a filter or change the search.") |
 | Jump target | `.ws-flash` (3px ring pulse, 1.4s) on the element scrolled to |
+| Divider grip (gap between full panels) | hidden until hover, focus or drag; `h-8 w-3 rounded-full bg-card ring-1 ring-border shadow-xs`, `GripVertical size-3.5 text-muted-foreground`; focus adds `ring-2 ring-ring` |
 
 ### Selected / active state — make the fill carry its own weight
 
@@ -185,9 +187,13 @@ re-check that an active nav item still beats its own hover in **both** themes.
 .ws-layer  { opacity 0 → 1, fades out in 45% of dur, fades in after a 40% delay }
 .ws-enter  { 320ms translateY(6px) → 0, opacity 0 → 1 }   /* new messages, chips */
 .ws-flash  { 1.4s ring pulse }                             /* jump-to highlight */
+.ws-divider { transition: left var(--ws-dur) var(--ws-ease) } /* moves with the columns */
+[data-resizing] .ws-slot, [data-resizing] .ws-divider { transition: none } /* a drag tracks the pointer */
 ```
 
-Panels never slide over content; columns resize together. Use `.ws-enter`
+Panels never slide over content; columns resize together. A divider drag is
+the one exception to easing: while it is on, nothing animates, or the column
+chases the pointer and the app reads as slow. Use `.ws-enter`
 for anything appended (messages, filter chips, Clear buttons).
 
 ## Iconography

@@ -177,6 +177,21 @@
   will-change: width;
 }
 
+/* Dividers move with the columns they sit between. While one is dragged
+   nothing animates, or the column would chase the pointer instead of
+   tracking it. */
+.ws-divider {
+  transition: left var(--ws-dur) var(--ws-ease);
+}
+[data-resizing] .ws-slot,
+[data-resizing] .ws-divider {
+  transition: none;
+}
+[data-resizing] {
+  cursor: col-resize;
+  user-select: none;
+}
+
 .ws-layer {
   opacity: 0;
   pointer-events: none;

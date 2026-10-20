@@ -2,9 +2,12 @@
 
 import { create } from "zustand";
 import { getItem, ITEMS } from "./demo-data";
-import { PARENT, type LayoutKey } from "./layout";
+import { PARENT, type LayoutKey, type PanelPrefs } from "./layout";
 import type { ContextPayload, Item, StepKind, Thread, ThreadMessage } from "./types";
 import { failedWidget, hitlWidget, mockReply, STEPS, widgetFor } from "./widgets";
+
+/** Where dragged panel widths are kept, in this browser. Bump the version when the layouts change shape. */
+const PREFS_KEY = "workspace.panel-prefs.v1";
 
 let uid = 0;
 const nextId = () => `m${++uid}`;
@@ -39,6 +42,8 @@ interface WorkspaceState {
   threads: Record<string, Thread>;
   /** Ask the detail panel to scroll to a step's latest output (nonce re-triggers). */
   focusStep: { step: StepKind; nonce: number } | null;
+  /** Widths the user dragged with a divider, per layout. */
+  prefs: PanelPrefs;
 
   setLayout: (l: LayoutKey) => void;
   back: () => void;
@@ -50,6 +55,10 @@ interface WorkspaceState {
   openTool: () => void;
   toggleSide: () => void;
   setQuery: (q: string) => void;
+  /** Reads the saved widths; called once after hydration, so the server and first client render agree. */
+  loadPrefs: () => void;
+  /** Applies (and saves) the widths from a divider drag. */
+  setPrefs: (p: PanelPrefs) => void;
 
   ensureThread: (id: string) => void;
   /** Progressive reveal: advance the current message by `chars`, then the next message. */
@@ -73,6 +82,7 @@ export const useWorkspace = create<WorkspaceState>((set, get) => ({
   query: "",
   threads: {},
   focusStep: null,
+  prefs: {},
 
   setLayout: (layout) => set({ layout }),
   back: () => set((s) => ({ layout: PARENT[s.layout] })),
@@ -91,6 +101,23 @@ export const useWorkspace = create<WorkspaceState>((set, get) => ({
   openTool: () => set({ layout: "tool" }),
   toggleSide: () => set((s) => ({ layout: s.layout === "toolSide" ? "tool" : "toolSide" })),
   setQuery: (query) => set({ query }),
+  loadPrefs: () => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(PREFS_KEY) ?? "null");
+      if (saved && typeof saved === "object") set({ prefs: saved });
+    } catch {
+      /* storage blocked or bad JSON: the default widths */
+    }
+  },
+  setPrefs: (prefs) => {
+    if (prefs === get().prefs) return;
+    set({ prefs });
+    try {
+      localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+    } catch {
+      /* private window: the widths last for the session */
+    }
+  },
 
   ensureThread: (id) => {
     if (get().threads[id]) return;
